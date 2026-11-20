@@ -1,0 +1,56 @@
+name: Bug report
+description: Something in the server or tools doesn't work as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. **Please remove personal data** (account/device ids, tokens, home paths) from anything you paste,
+        and never attach game files or APKs.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. server\retr0_server.cmd start -WithSync
+        2. server\play.cmd
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant lines from `server/runtime/sync.log`, `server/runtime/*.err.log`, and `adb logcat` (lines with CC Trace or RETR0).
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: Server version or commit
+      placeholder: v0.1.0 or a commit hash
+  - type: dropdown
+    id: env
+    attributes:
+      label: Where does the game run?
+      options:
+        - Android emulator (x86_64)
+        - Real phone
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I removed personal data from everything above.
+          required: true
+        - label: I'm using my own copy of the game (no shared APKs or game files).
+          required: true

@@ -1,0 +1,46 @@
+name: Research finding
+description: Share something you found about how the game or its protocol works.
+labels: [finding]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Findings need **evidence** and an honest **confidence** label. Describe behaviour and addresses; please don't paste
+        decompiler output or game files.
+  - type: input
+    id: area
+    attributes:
+      label: Area
+      placeholder: e.g. CloudCell sync, sub-sync 10477, saves, assets, physics
+    validations:
+      required: true
+  - type: textarea
+    id: finding
+    attributes:
+      label: Finding
+      description: What you found, in plain words. Include the request/reply layout if it's a protocol finding.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Addresses (arm64 ELF, RR3 14.0.1), log strings, recorded traffic, test results.
+    validations:
+      required: true
+  - type: dropdown
+    id: confidence
+    attributes:
+      label: Confidence
+      options:
+        - CONFIRMED
+        - HIGH
+        - MEDIUM
+        - LOW
+        - UNKNOWN
+    validations:
+      required: true
+  - type: textarea
+    id: next
+    attributes:
+      label: What would confirm or use it?

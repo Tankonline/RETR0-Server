@@ -1,0 +1,19 @@
+name: Feature request
+description: Suggest something the server should do (e.g. answer a sub-sync, support a game feature).
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What should it do?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Which game feature does it bring back or improve?
+  - type: textarea
+    id: known
+    attributes:
+      label: What is already known?
+      description: Relevant sub-sync ids or findings from docs/reference (e.g. NW-xx).

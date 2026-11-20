@@ -17,6 +17,25 @@ All integers are **little-endian u32** unless stated. `lp` means a length-prefix
 | `POST https://0037-assets.cloudcell.com//assetman/assetManDownloadPackHash.php` | Asset-manager fallback | Not needed when the CDN answers |
 | `GET https://firemonkeys.akamaized.net//rr3/live/<list>/<md5>.bin` + `Range` | Asset packs | HTTP 206 with the byte range ([09-asset-cdn.md](09-asset-cdn.md)) |
 
+### A sync round trip
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Game as RR3 (CloudCell SyncManager)
+    participant CDN as cdn :8780 (router)
+    participant Sync as sync :8781 (RETR0 service)
+    Game->>CDN: POST /time
+    CDN-->>Game: 200 · X-Request-Start: <Unix seconds>
+    Note over Game: components queue sub-syncs<br/>(type, param, payload)
+    Game->>CDN: POST /CC_Sync.php · Box(Box(header + sub-syncs, ZLIB), XOR)
+    CDN->>Sync: forward
+    Sync->>Sync: unbox ×2 · dispatch each sub-sync to its handler
+    Sync-->>CDN: Box(Box(ok · value · member header · parts, ZLIB), XOR)
+    CDN-->>Game: reply
+    Note over Game: auth manager reads the member header,<br/>then each part goes to its sub-sync callback in queue order
+```
+
 ## 2. Boxing
 
 Every sync body is wrapped twice: `Box(Box(body, ZLIB), XOR)`. The reply is unwrapped the same way, twice.

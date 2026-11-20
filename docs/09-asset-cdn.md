@@ -14,6 +14,19 @@ protocol, how the server rebuilds the CDN from your own data, and why "edited li
 4. It checks every file's **MD5 against the list**, unpacks compressed files, and retries a failed file up to 8
    times.
 
+```mermaid
+sequenceDiagram
+    participant Game as RR3 AssetManager
+    participant Srv as RETR0 cdn :8780
+    Note over Game: unpack res.zip → 1,236 asset lists
+    loop for each list still missing files
+        Game->>Srv: GET //rr3/live/<list>/<md5 of list>.bin · Range: bytes=a-b
+        Srv-->>Game: 206 Partial Content (key · length · stored bytes …)
+        Game->>Game: check key, MD5 against the list, unpack FMASZ1
+    end
+    Note over Game: retry a failed file up to 8 times
+```
+
 ## 2. Pack format
 
 ```

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Client patches and builds
+    url: https://github.com/Tankonline/RETR0-Client/issues
+    about: Problems building or installing the RETR0 client belong in the RETR0-Client repository.
+  - name: Security issue
+    url: https://github.com/Tankonline/RETR0-Server/security/advisories/new
+    about: Please report vulnerabilities privately.
