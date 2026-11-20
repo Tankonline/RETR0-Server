@@ -7,8 +7,9 @@ one PowerShell script.
 
 ```
  RR3 (RETR0 client) on the emulator
-   │  HttpRequest.init(url): CloudCell / CDN host ──► http://127.0.0.1:8780/<path>
-   │                                                   + header X-RETR0-Host: <original host>
+   │  native hook before HttpRequest.init: CloudCell / CDN host
+   │      ──► http://127.0.0.1:8780/_retr0host/<original host><path>
+   │      (the 0.1.0 Java client and the Frida hook send /<path> + header X-RETR0-Host instead)
    │  any DNS lookup ──► emulator resolver ──► PC 127.0.0.1:53 (dns service: logs, answers NXDOMAIN)
    ▼
  adb reverse tcp:8780 tcp:8780
@@ -30,7 +31,8 @@ one PowerShell script.
 
 - **dns** logs every hostname the emulator looks up to `runtime/dns_queries.jsonl` and answers none, so nothing
   can reach a real server by name.
-- **cdn** is a rule-driven HTTP server. It routes on the `X-RETR0-Host` header and the path, serves pack files with
+- **cdn** is a rule-driven HTTP server. It takes the original host from a `/_retr0host/<host>/` path prefix (the
+  native client) or the `X-RETR0-Host` header (Java client, Frida), routes on that host and the path, serves pack files with
   byte ranges, answers `/time`, forwards sync, and records every request (headers and bodies) to
   `runtime/recorder/`. Rules: [`config/rules_cdn.json`](../server/config/rules_cdn.json) (assets only) and
   [`config/rules_cdn_sync.json`](../server/config/rules_cdn_sync.json) (assets + sync).
@@ -54,6 +56,7 @@ one PowerShell script.
 server/
   retr0_server.cmd / .ps1     start | stop | status | restart   [-WithSync]
   client.ps1                  status | apply | restore | install-fresh | play   (the RETR0 client on the emulator)
+                              ui-text | ui-text-restore   (button text: "Change Username (Restart Required)")
   play.cmd                    = client.ps1 play
   store_grant.ps1             old name, forwards to client.ps1
   config/                     recorder rules

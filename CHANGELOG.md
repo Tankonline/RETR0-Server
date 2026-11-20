@@ -3,6 +3,16 @@
 All notable changes to the RETR0 Server. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions follow [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-11-20
+
+### Added
+- **CDN service** accepts the `/_retr0host/<host>/<path>` prefix used by the native redirect of RETR0 Client 0.2.0
+  (the host is taken from the path; `X-RETR0-Host` still works).
+- **`client.ps1 ui-text` / `ui-text-restore`** and `tools/retr0_gui_patch.py`: rename Settings › ENTER RACING CODE to
+  "Change Username (Restart Required)" and its prompt, built from the player's own game files; originals kept.
+- Docs: the emulator-reboot behaviour of in-place installs; the asset audit (run 31) and the missing-UI-image
+  diagnosis.
+
 ## [0.1.0] - 2026-11-20
 
 First public release.
@@ -28,4 +38,5 @@ First public release.
   fields). Without it the client misread every non-empty reply ("Connection error"; likely the cause of the gift
   freezes).
 
+[0.2.0]: https://github.com/Tankonline/RETR0-Server/releases/tag/v0.2.0
 [0.1.0]: https://github.com/Tankonline/RETR0-Server/releases/tag/v0.1.0

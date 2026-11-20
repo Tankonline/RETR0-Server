@@ -5,7 +5,7 @@ The RETR0 server: run `retr0_server.cmd start -WithSync`, then `play.cmd`.
 | Path | What |
 |---|---|
 | `retr0_server.cmd` / `.ps1` | `start` · `stop` · `status` · `restart` (`-WithSync` adds the CloudCell sync service) |
-| `client.ps1` / `play.cmd` | Put the RETR0 client on the emulator (`apply`, `restore`, `install-fresh`, `status`) and start the game (`play`) |
+| `client.ps1` / `play.cmd` | Put the RETR0 client on the emulator (`apply`, `restore`, `install-fresh`, `status`), start the game (`play`), and the optional button text (`ui-text`, `ui-text-restore`) |
 | `config/` | Request-routing rules for the CDN service |
 | `services/` | `dns_logger.py`, `recorder_server.py` (CDN + router), `local_service/` (CloudCell sync), `cloudcell_codec/`, `seed_data_decode.py` |
 | `tools/` | Asset-pack building from your own data |

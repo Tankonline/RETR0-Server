@@ -63,8 +63,6 @@ If your install already has all its content, you can skip this step.
 Use the **[RETR0-Client](https://github.com/Tankonline/RETR0-Client)** repository (clone it next to this one):
 
 ```powershell
-python ..\RETR0-Client\patches\local_server_redirect\build_redirect_dex.py --apk <apk> --out build\apk `
-    --apktool <path to apktool_3.0.3.jar>
 python ..\RETR0-Client\patches\store_grant_patch\build_patch.py --apk <apk> --out build\apk `
     --ndk-bin <sdk>\ndk\28.2.13676358\toolchains\llvm\prebuilt\windows-x86_64\bin `
     --build-tools <sdk>\build-tools\36.0.0
@@ -100,6 +98,15 @@ server\python\Scripts\python -I server\tools\apply_edited_lists.py apply --edite
 `apply_edited_lists.py` also adds the RGB substitutes for textures that the edited lists dropped. Pushing `res.zip`
 *before* the first launch does not work: the game wipes `files/apk/` while its checksum file is missing.
 
+> [!WARNING]
+> An emulator **restart** removes an in-place swapped APK (Android re-checks signatures at boot); your data stays.
+> Reinstall the original over it with `adb install -r server\client\apk\rr3_14.0.1_original.apk`, then
+> `server\client.ps1 apply` again.
+
+**Optional: button text.** `server\client.ps1 ui-text` renames Settings › ENTER RACING CODE to "Change Username
+(Restart Required)" (it edits two of the game's UI files on the device and keeps the originals in
+`server\backups\ui_text\`).
+
 ## 7. Play
 
 ```powershell
@@ -121,4 +128,5 @@ server\retr0_server.cmd stop
 | The RETR0 client | `server\client.ps1 restore` (original APK back in place, data kept) |
 | Edited lists on the device | `apply_edited_lists.py restore`, and copy back `/data/local/tmp/retr0_res_backup/res.zip` |
 | The player name | delete `files/doc/retr0_username.txt` on the device |
+| The button text | `server\client.ps1 ui-text-restore` |
 | Everything | uninstall and reinstall the original APK |

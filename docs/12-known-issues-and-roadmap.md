@@ -12,7 +12,8 @@
 | Edited asset lists | A fresh install lacks the files that could not be supplied byte-exactly (some limited-time GUI art, low-detail track variants) |
 | arm64 only | The native patch targets the arm64-v8a library of 14.0.1; armv7 devices are not patched |
 | Emulator-focused | Paths and `adb reverse` assume the emulator; a real phone would need a reachable server address in the redirect |
-| In-place swap after a reboot | Not verified that Android keeps the swapped APK across an emulator reboot; run `client.ps1 apply` again if needed |
+| In-place swap after a reboot | **It does not survive:** at boot Android re-checks signatures and removes the swapped APK's code (data is kept). Reinstall the original with `adb install -r`, then `client.ps1 apply`. A permanent install needs a signed APK, which today means a fresh install |
+| Missing UI images show no error | If cards lack their frame or badge, the device is missing UI image files; compare it with your PC copy of the game data (the game logs nothing) |
 | Store package sizes | Some Gold/R$/M$ package sizes were not individually tested (same code path as the tested ones); the 7-Day Gold Card (10196) is not covered |
 
 ## Roadmap
@@ -21,5 +22,6 @@
 2. Give real answers to the sub-syncs that features need: career/progress, events data, store sales, leaderboards
    (local), race teams.
 3. Make the server address in the redirect configurable (for a real phone on the same network).
-4. Answer `assetManDownloadPackHash.php` (reply format still unknown).
-5. Keep documenting subsystems: front end, audio, the rest of the vehicle data.
+4. A data-preserving way to install the signed client, and a standalone patcher (no NDK or SDK tools).
+5. Answer `assetManDownloadPackHash.php` (reply format still unknown).
+6. Keep documenting subsystems: front end, audio, the rest of the vehicle data.

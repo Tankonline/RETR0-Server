@@ -7,13 +7,17 @@
 #                               (uninstalling deletes the game's data and downloads; asks first)
 #   .\client.ps1 play           forward port 8780 to this PC and start the game (needs the RETR0 client
 #                               and the server: retr0_server.cmd start -WithSync)
+#   .\client.ps1 ui-text        rename Settings > ENTER RACING CODE to "Change Username (Restart Required)" and
+#                               its prompt to "Enter your new username": edits two of the game's own UI layout files
+#                               on the emulator (built by tools\retr0_gui_patch.py; originals kept in backups\ui_text)
+#   .\client.ps1 ui-text-restore  put the two original layout files back
 #
 # The RETR0 client is the original 14.0.1 APK plus (1) the store preservation grants (OVERVIEW.md section 8)
 # and (2) a built-in redirect: every CloudCell / asset-CDN request goes to http://127.0.0.1:8780 on the
 # emulator, which `adb reverse` forwards to this server (OVERVIEW.md section 9). Other hosts are untouched.
 # apply/restore need root on the emulator (Google APIs image): they copy the APK over base.apk and keep its
 # owner, mode, SELinux label and timestamp, then let Android re-optimise the app's code.
-param([Parameter(Mandatory = $true)][ValidateSet("status", "apply", "restore", "install-fresh", "play")][string]$Command)
+param([Parameter(Mandatory = $true)][ValidateSet("status", "apply", "restore", "install-fresh", "play", "ui-text", "ui-text-restore")][string]$Command)
 
 $ErrorActionPreference = "Stop"
 $Pkg = "com.ea.games.r3_row"
@@ -39,6 +43,22 @@ function Get-BaseApk {
 
 function Get-DeviceSha([string]$path) {
     return ((adb shell "su 0 sha256sum '$path'") -split "\s+")[0]
+}
+
+$GuiDir = "/sdcard/Android/data/$Pkg/files/.depot/gui/processed"
+$GuiFiles = @("SettingsMenu.gui", "TextEntryPopup.gui")
+$GuiBackup = Join-Path $PSScriptRoot "backups\ui_text"
+
+function Push-GuiFiles([string]$fromDir) {
+    adb shell am force-stop $Pkg
+    foreach ($f in $GuiFiles) {
+        $local = Join-Path $fromDir $f
+        adb push $local "$GuiDir/$f" | Out-Null
+        adb shell "su 0 sh -c 'chown `$(stat -c %u:%g $GuiDir) $GuiDir/$f'" | Out-Null   # same owner as the folder
+        $sha = ((adb shell "sha256sum '$GuiDir/$f'") -split "\s+")[0]
+        if ($sha -ne (Get-Sha $local)) { throw "copy check failed for $f" }
+        Write-Host "  $f -> emulator"
+    }
 }
 
 function Set-DeviceApk([string]$localName) {
@@ -83,5 +103,28 @@ switch ($Command) {
         adb shell am force-stop $Pkg
         adb shell monkey -p $Pkg -c android.intent.category.LAUNCHER 1 | Out-Null
         Write-Host "Game started; it talks to this server on port $Port until you close it."
+    }
+    "ui-text" {
+        $py = Join-Path $PSScriptRoot "python\Scripts\python.exe"
+        $tmp = Join-Path $env:TEMP "retr0_ui_text"
+        Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
+        New-Item -ItemType Directory -Force "$tmp\in", "$tmp\out" | Out-Null
+        foreach ($f in $GuiFiles) { adb pull "$GuiDir/$f" "$tmp\in\$f" | Out-Null }
+        # builds from the emulator's own files; refuses files that are already patched
+        & $py -I (Join-Path $PSScriptRoot "tools\retr0_gui_patch.py") (Join-Path $ApkDir $Original) "$tmp\in" --out "$tmp\out"
+        if ($LASTEXITCODE -ne 0) { throw "UI text patch not built (already applied? use ui-text-restore first)" }
+        if (-not (Test-Path $GuiBackup)) {
+            New-Item -ItemType Directory -Force $GuiBackup | Out-Null
+            foreach ($f in $GuiFiles) { Copy-Item "$tmp\in\$f" (Join-Path $GuiBackup $f) }
+            Write-Host "originals saved in $GuiBackup"
+        }
+        Push-GuiFiles "$tmp\out"
+        Remove-Item -Recurse -Force $tmp
+        Write-Host "UI text applied; start the game again to see it."
+    }
+    "ui-text-restore" {
+        if (-not (Test-Path (Join-Path $GuiBackup $GuiFiles[0]))) { throw "no backup in $GuiBackup" }
+        Push-GuiFiles $GuiBackup
+        Write-Host "original UI layout files restored."
     }
 }

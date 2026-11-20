@@ -38,6 +38,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 MAX_BODY = 64 * 1024 * 1024
 RANGE_RE = re.compile(r"bytes=(\d*)-(\d*)$")
+HOST_PREFIX_RE = re.compile(r"^/_retr0host/([A-Za-z0-9.-]{1,253})(/.*)?$")
 
 
 def load_rules(path: str | None) -> list[dict]:
@@ -72,6 +73,12 @@ def make_handler(rules: list[dict], out: Path):
                 return self._reply(413, b"", "too large", {}, None)
             body = self.rfile.read(n_len) if n_len else b""
             host = self.headers.get("X-RETR0-Host", "")
+            # The native RETR0 client redirect can't add headers, so it puts the original host in the path:
+            #   /_retr0host/<host>/<original path>   (e.g. /_retr0host/0037-connect.cloudcell.com/CC_Sync.php)
+            m = HOST_PREFIX_RE.match(self.path)
+            if m:
+                host = host or m.group(1)
+                self.path = m.group(2) or "/"
             path, _, query = self.path.partition("?")
             with lock:
                 counter["n"] += 1
