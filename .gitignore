@@ -1,0 +1,22 @@
+# Never commit game files, builds or local state.
+server/python/
+server/data/
+server/cdn/
+server/client/
+server/runtime/
+server/backups/
+build/
+**/smali_work/
+
+*.apk
+*.dex
+*.so
+*.bin
+*.dat
+*.zip
+*.pvr
+*.z
+
+__pycache__/
+*.pyc
+.pytest_cache/

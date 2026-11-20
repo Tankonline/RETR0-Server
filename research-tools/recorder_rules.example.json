@@ -1,0 +1,6 @@
+[
+  {"path": "CC_Sync\\.php$", "method": "POST", "proxy": "http://127.0.0.1:8781"},
+  {"path": "^/time$", "method": "POST", "status": 404},
+  {"host": "^firemonkeys\\.akamaized\\.net$", "method": "GET", "status": 404},
+  {"path": "assetManDownloadPackHash\\.php$", "status": 404}
+]

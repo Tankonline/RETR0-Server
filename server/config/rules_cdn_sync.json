@@ -1,0 +1,7 @@
+[
+  {"path": "^/time$", "method": "POST", "status": 200, "body": "", "headers": {"X-Request-Start": "{unix_time}"}},
+  {"host": "^firemonkeys\\.akamaized\\.net$", "method": "GET", "dir": "cdn", "strip": "^/+"},
+  {"host": "^firemonkeys\\.akamaized\\.net$", "method": "HEAD", "dir": "cdn", "strip": "^/+"},
+  {"path": "CC_Sync\\.php$", "method": "POST", "proxy": "http://127.0.0.1:8781"},
+  {"path": "^/retr0/cloudsave/", "proxy": "http://127.0.0.1:8781"}
+]

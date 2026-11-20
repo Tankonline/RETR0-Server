@@ -1,0 +1,5 @@
+[
+  {"path": "^/time$", "method": "POST", "status": 200, "body": "", "headers": {"X-Request-Start": "{unix_time}"}},
+  {"host": "^firemonkeys\\.akamaized\\.net$", "method": "GET", "dir": "cdn", "strip": "^/+"},
+  {"host": "^firemonkeys\\.akamaized\\.net$", "method": "HEAD", "dir": "cdn", "strip": "^/+"}
+]
