@@ -16,7 +16,7 @@ read on their own.
 | 07 | [The server](07-server.md) | Server architecture, services, ports, config, state |
 | 08 | [Setup guide](08-setup-guide.md) | From zero to playing: emulator, server, assets, client |
 | 09 | [Asset CDN](09-asset-cdn.md) | How the game downloads content and how the packs are rebuilt from your own data |
-| 10 | [The RETR0 client](10-retr0-client.md) | How the game is patched: native code cave, smali, build pipeline, installing |
+| 10 | [The RETR0 client](https://github.com/Tankonline/RETR0-Client/blob/main/docs/how-the-client-is-patched.md) | How the game is patched: native code cave, smali, build pipeline, installing |
 | 11 | [Testing](11-testing.md) | Unit tests, runtime test runs, what was verified |
 | 12 | [Known issues and roadmap](12-known-issues-and-roadmap.md) | What is open, what is next |
 | 13 | [Legal and ethics](13-legal-and-ethics.md) | The project's rules and why they exist |
@@ -25,10 +25,10 @@ read on their own.
 
 | Feature | Page |
 |---|---|
-| Built-in server redirect (no Frida) | [features/server-redirect.md](features/server-redirect.md) |
-| Special events unlocked | [features/special-events.md](features/special-events.md) |
-| Store preservation grants | [features/store-grants.md](features/store-grants.md) |
-| Player name (Username) | [features/username.md](features/username.md) |
+| Built-in server redirect (no Frida) | [features/server-redirect.md](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/server-redirect.md) |
+| Special events unlocked | [features/special-events.md](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/special-events.md) |
+| Store preservation grants | [features/store-grants.md](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/store-grants.md) |
+| Player name (Username) | [features/username.md](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/username.md) |
 | Sync reply member header fix | [features/sync-reply-header-fix.md](features/sync-reply-header-fix.md) |
 | Gifts (parked) | [features/gifts.md](features/gifts.md) |
 

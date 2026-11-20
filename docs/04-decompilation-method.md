@@ -65,12 +65,12 @@ The same loop was used for every subsystem and feature in this repository:
 3. **Follow callers and callees** (Ghidra cross-references, call-tree scripts, or scanning code for `adrp`/`add`
    pairs that load an address).
 4. **Confirm at run time** on the emulator: logcat lines, recorded requests, or a temporary diagnostic build that logs
-   a value (see [10-retr0-client.md](10-retr0-client.md)).
+   a value (see [the RETR0 client](https://github.com/Tankonline/RETR0-Client/blob/main/docs/how-the-client-is-patched.md)).
 5. **Write it down** with ID, evidence and confidence.
 
 Example: the username feature started from the word "Guest" on screen. A diagnostic build proved it was *not* a text
 lookup; the Profile screen's code led to the function `0x135e944`, and its disassembly showed it returns a string
-through register `x8`. See [features/username.md](features/username.md).
+through register `x8`. See [features/username.md](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/username.md).
 
 ### 3.4 Naming and confidence rules
 

@@ -39,7 +39,7 @@ the detailed reference document.
   version 5, size), XOR checksum. Body: an interned dictionary of C++ member-path names plus typed value tables.
   Currency values are tamper-protected (`[EHV]`/`[H]`) and were deliberately **not** decoded.
 - The save holds **no player name**: the name comes from the online account (see
-  [features/username.md](features/username.md)).
+  [features/username.md](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/username.md)).
 - CloudCell keeps its own small data files in `files/doc/CC_Data/<id>` (e.g. id 6 = the member record).
   → [reference/SAVE_SYSTEM_ANALYSIS.md](reference/SAVE_SYSTEM_ANALYSIS.md)
 
@@ -73,5 +73,5 @@ their requests simply fail on the locked emulator.
 - The static store catalogue (556 products: currency packages, packs, cars, offers) ships in seed file 12.
 - Purchases go through EA Nimble MTX / Google Play; the game also has a **non-purchase** reward path (used by its
   free offerwall rewards), which the store-grants feature reuses.
-  → [features/store-grants.md](features/store-grants.md),
+  → [features/store-grants.md](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/store-grants.md),
   [reference/STORE_PRESERVATION_GRANTS.md](reference/STORE_PRESERVATION_GRANTS.md)

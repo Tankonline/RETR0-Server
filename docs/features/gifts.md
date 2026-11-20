@@ -23,7 +23,7 @@
 
 Two test gifts froze the game 35–60 s after delivery (GLThread, ~250k–800k `UnpackData` assertion messages). This
 happened on the unpatched game too. Both gifts are held in the server state (`gifts.held`). The store feature was
-then built a different way ([store-grants.md](store-grants.md)).
+then built a different way ([store-grants.md](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/store-grants.md)).
 
 The likely cause was found later: the server's sync replies lacked the member header, so a long gift reply was
 misread ([sync-reply-header-fix.md](sync-reply-header-fix.md)). **Next step:** re-test one gift with the fixed server.

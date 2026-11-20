@@ -92,13 +92,13 @@ This is the project's history in order. Each step names the main result and wher
 
 - **Runs 16–23 · Store preservation grants.** The server gift channel was mapped but froze the game, so the BUY
   buttons were patched instead to grant currency through the game's own non-purchase award.
-  → [features/store-grants.md](features/store-grants.md), [features/gifts.md](features/gifts.md)
+  → [features/store-grants.md](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/store-grants.md), [features/gifts.md](features/gifts.md)
 - **Run 24 · Special events.** The "internet connection is required" popup turned out to be the timed Frida hook
-  detaching mid-session. → [features/special-events.md](features/special-events.md)
+  detaching mid-session. → [features/special-events.md](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/special-events.md)
 - **Run 25 · RETR0 client.** The redirect was built into the APK, so Frida is no longer needed to play.
-  → [features/server-redirect.md](features/server-redirect.md)
+  → [features/server-redirect.md](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/server-redirect.md)
 - **Runs 26–29 · Username.** Traced where "Guest" comes from, added a name file set through Enter Racing Code, and
   found and fixed a long-standing server bug (the missing sync reply member header).
-  → [features/username.md](features/username.md), [features/sync-reply-header-fix.md](features/sync-reply-header-fix.md)
+  → [features/username.md](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/username.md), [features/sync-reply-header-fix.md](features/sync-reply-header-fix.md)
 
 Every runtime run, with setup and evidence: [reference/RUNTIME_TEST_PLAN.md](reference/RUNTIME_TEST_PLAN.md).

@@ -51,4 +51,4 @@ See [13-legal-and-ethics.md](13-legal-and-ethics.md).
  └──────────────────────────┘                  └──────────────────────────────────────┘
 ```
 
-Details: [07-server.md](07-server.md) and [10-retr0-client.md](10-retr0-client.md).
+Details: [07-server.md](07-server.md) and [the RETR0 client](https://github.com/Tankonline/RETR0-Client/blob/main/docs/how-the-client-is-patched.md).

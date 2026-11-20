@@ -60,10 +60,12 @@ If your install already has all its content, you can skip this step.
 
 ## 5. Build the RETR0 client
 
+Use the **[RETR0-Client](https://github.com/Tankonline/RETR0-Client)** repository (clone it next to this one):
+
 ```powershell
-python client-patches\local_server_redirect\build_redirect_dex.py --apk <apk> --out build\apk `
+python ..\RETR0-Client\patches\local_server_redirect\build_redirect_dex.py --apk <apk> --out build\apk `
     --apktool <path to apktool_3.0.3.jar>
-python client-patches\store_grant_patch\build_patch.py --apk <apk> --out build\apk `
+python ..\RETR0-Client\patches\store_grant_patch\build_patch.py --apk <apk> --out build\apk `
     --ndk-bin <sdk>\ndk\28.2.13676358\toolchains\llvm\prebuilt\windows-x86_64\bin `
     --build-tools <sdk>\build-tools\36.0.0
 ```
@@ -73,7 +75,7 @@ Outputs in `build\apk\`:
 - `rr3_14.0.1_retr0_client_signed.apk`: debug-signed, for a new install.
 
 Copy both into `server\client\apk\`, together with your original APK renamed to `rr3_14.0.1_original.apk` (used by
-`client.ps1 restore`). How the build works: [10-retr0-client.md](10-retr0-client.md).
+`client.ps1 restore`). How the build works: [the RETR0 client](https://github.com/Tankonline/RETR0-Client/blob/main/docs/how-the-client-is-patched.md).
 
 ## 6. Put the client on the emulator
 
