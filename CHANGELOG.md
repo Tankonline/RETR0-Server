@@ -3,6 +3,14 @@
 All notable changes to the RETR0 Server. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- **Server gifts work** (runs 32–33): the gift reply now sends the gift *kind* the client expects (the product id
+  was sent there, so every gift was dropped). Gold arrives as a claimable offer reward; R$ and M$ as community gifts,
+  credited at once with a RETR0 popup and offered only once. The 10481 receipt is parsed with the client's real
+  layout.
+
 ## [0.2.0] - 2026-11-20
 
 ### Added

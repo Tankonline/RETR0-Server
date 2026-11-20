@@ -227,3 +227,66 @@ def test_publish_from_seed_copies_boxed_bytes(tmp_path):
     svc.publish_files(store, [], ["12"], str(seed))
     assert store.file_payload("12") == boxed and store.published_files() == {"12": 1}
     assert cc.unbox(cc.unbox(store.file_payload("12"))) == b"payload"
+
+
+def test_gift_reply_uses_offerwall_kind_and_first_string(service):
+    """SP-16: the client's gift listener (0xcd3cfc) switches on the second u32 (kind 2 = claimable offerwall gift,
+    any value other than 0/2 is dropped) and stores only the first string. Amounts come from the catalogue."""
+    meta = "type:wrench, qty:16, displayImage:store_image_coins_02.png"
+    service.grant_packages = {10051: meta}
+    with pytest.raises(ValueError):
+        service.grant(99999, source="test")              # not an allowed currency package
+    gid = service.grant(10051, source="test")
+    body = service._fetch_gifts(1, b"")
+    count, got_id, kind = struct.unpack_from("<III", body)
+    assert (count, got_id, kind) == (1, gid, svc.OFFERWALL_GIFT_KIND) and kind == 2
+    o = 12
+    strings = []
+    for _ in range(3):
+        (n,) = struct.unpack_from("<I", body, o)
+        strings.append(body[o + 4:o + 4 + n].decode())
+        o += 4 + n
+    assert strings == [meta, "", ""] and o == len(body)
+    # acknowledged gifts (10481: u32 count, per gift u32 id, lp string, u32 flag) are not offered again
+    ack = struct.pack("<II", 1, gid) + cc.lp_string(meta) + struct.pack("<I", 1)
+    service._claim_gifts(1, ack)
+    assert struct.unpack_from("<I", service._fetch_gifts(1, b""))[0] == 0
+
+
+def test_claim_parses_the_clients_two_gift_receipt(service):
+    """Byte-exact 10481 payload the client sent for gifts 4 and 5 (run 32)."""
+    m1 = "type:money, qty:50000, displayImage:store_image_r_dollars_01.png"
+    m2 = "type:mdollars, qty:45000, displayImage:store_image_m_dollar_02.png"
+    payload = (struct.pack("<II", 2, 4) + cc.lp_string(m1) + struct.pack("<II", 1, 5) + cc.lp_string(m2)
+               + struct.pack("<I", 1))
+    assert len(payload) == 158
+    for i in range(5):
+        service.store.queue_gift(10051, "type:wrench, qty:16", "test")
+    service._claim_gifts(1, payload)
+    assert sorted(g["id"] for g in service.store.pending_gifts()) == [1, 2, 3]
+
+
+def test_rs_and_ms_go_as_community_gifts_offered_once(service):
+    """SP-17: Gold = kind 2 (claimable); R$/M$ = kind 0 (credited at once, popup title/message in strings 2/3).
+    Kind 0 has no client-side duplicate check and the client asks twice per session, so it is offered once."""
+    service.grant_packages = {10051: "type:wrench, qty:16", 10045: "type:money, qty:50000",
+                              10461: "type:mdollars, qty:45000"}
+    g_gold = service.grant(10051, source="test")
+    g_rs = service.grant(10045, source="test")
+
+    def offered(body):
+        (n,), o, out = struct.unpack_from("<I", body), 4, []
+        for _ in range(n):
+            gid, kind = struct.unpack_from("<II", body, o); o += 8
+            s = []
+            for _ in range(3):
+                (k,) = struct.unpack_from("<I", body, o); s.append(body[o + 4:o + 4 + k].decode()); o += 4 + k
+            out.append((gid, kind, s))
+        assert o == len(body)
+        return out
+
+    first = offered(service._fetch_gifts(1, b""))
+    assert first == [(g_gold, 2, ["type:wrench, qty:16", "", ""]),
+                     (g_rs, 0, ["type:money, qty:50000", "RETR0", "Preservation grant: 50,000 R$"])]
+    second = offered(service._fetch_gifts(1, b""))          # same session, before the client acknowledges
+    assert [x[0] for x in second] == [g_gold]               # kind 0 is not offered twice

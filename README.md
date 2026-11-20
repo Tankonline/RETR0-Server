@@ -75,7 +75,7 @@ flowchart LR
 | Grand Prix / Special Events | ✅ Working | [Special events](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/special-events.md) |
 | Store BUY gives currency (free preservation grant) | ✅ Working | [Store grants](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/store-grants.md) |
 | Choose your player name instead of "Guest" | ✅ Working | [Username](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/username.md) |
-| Server-side gifts | ⏸️ Parked | [Gifts](docs/features/gifts.md) |
+| Server-side gifts (Gold, R$, M$) | ✅ Working | [Gifts](docs/features/gifts.md) |
 | Leaderboards · race teams · multiplayer | 🗺️ Planned | [Roadmap](docs/12-known-issues-and-roadmap.md) |
 
 ## Quick start

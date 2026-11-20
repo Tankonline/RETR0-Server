@@ -5,7 +5,7 @@
 | Item | Detail |
 |---|---|
 | Most sub-syncs get empty answers | The game accepts that for everything tested so far, but features that need data (leaderboards, race teams, events data, sales) have none |
-| Gifts are parked | Two test gifts froze the game before the sync header fix; likely fixed now, not re-tested ([features/gifts.md](features/gifts.md)) |
+| Gifts are not per player | One queue for every connected game; cars and other reward types not investigated yet ([features/gifts.md](features/gifts.md)) |
 | Racing codes give no rewards | Every racing code is treated as a name change |
 | Name applies after a restart | The name file is read once per game start |
 | Re-using a name | The game refuses a code it already sent; change the capitals |
@@ -18,7 +18,7 @@
 
 ## Roadmap
 
-1. Re-test gifts with the fixed sync reply.
+1. Per-player gifts with list/remove/history; investigate car rewards (the kind-0 community gift accepts any store reward type).
 2. Give real answers to the sub-syncs that features need: career/progress, events data, store sales, leaderboards
    (local), race teams.
 3. Make the server address in the redirect configurable (for a real phone on the same network).

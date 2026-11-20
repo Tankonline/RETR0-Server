@@ -44,6 +44,10 @@ log = logging.getLogger("retr0.local_service")
 
 TOKEN_TIMEOUT_S = 24 * 3600
 CLOUDSAVE_PREFIX = "/retr0/cloudsave/"
+OFFERWALL_GIFT_KIND = 2   # ad-hoc gift kind the client stores as a claimable offerwall reward (SP-16)
+COMMUNITY_GIFT_KIND = 0   # ad-hoc gift kind credited at once as "Community Management" (0xcd7844, SP-17)
+OFFERWALL_GIFT_TYPES = ("type:wrench",)   # the offerwall claim credits store reward type 3 (Gold) only (SP-17)
+CURRENCY_NAMES = {"type:wrench": "Gold", "type:money": "R$", "type:mdollars": "M$"}
 
 
 class Store:
@@ -124,21 +128,40 @@ class Store:
         return (self.dir / "files" / self._check_file_name(name)).read_bytes()
 
     # ---- RETR0 preservation grants, delivered as CloudCell ad-hoc gifts (STORE_PRESERVATION_GRANTS.md) ----
-    def queue_gift(self, product_id: int, metadata: str, source: str) -> int:
-        """Queue one gift for delivery through sub-sync 10480. Returns its unique gift id (the client skips gift
-        ids it already holds, SP-10)."""
+    def queue_gift(self, product_id: int, metadata: str, source: str, kind: int = 2,
+                   title: str = "", message: str = "") -> int:
+        """Queue one gift for delivery through sub-sync 10480. Returns its unique gift id. kind 2 = claimable
+        offerwall reward (the client skips ids it already holds); kind 0 = credited at once (no client-side
+        duplicate check, so it is offered only once: see take_gifts_to_offer)."""
         with self.lock:
             g = self.state.setdefault("gifts", {"next_id": 1, "pending": [], "claimed": []})
             gid = g["next_id"]
             g["next_id"] += 1
             g["pending"].append({"id": gid, "product_id": product_id, "metadata": metadata, "source": source,
-                                 "queued": int(time.time())})
+                                 "kind": kind, "title": title, "message": message, "queued": int(time.time())})
             self._save()
             return gid
 
     def pending_gifts(self) -> list[dict]:
         with self.lock:
             return [dict(x) for x in self.state.get("gifts", {}).get("pending", [])]
+
+    def take_gifts_to_offer(self) -> list[dict]:
+        """Pending gifts for one 10480 reply. A kind-0 gift is marked "offered" the first time and never offered
+        again (the client asks twice per session before it acknowledges, and kind 0 has no client dedupe)."""
+        with self.lock:
+            g = self.state.get("gifts", {})
+            out, now, changed = [], int(time.time()), False
+            for x in g.get("pending", []):
+                if x.get("kind", OFFERWALL_GIFT_KIND) == COMMUNITY_GIFT_KIND:
+                    if x.get("offered"):
+                        continue
+                    x["offered"] = now
+                    changed = True
+                out.append(dict(x))
+            if changed:
+                self._save()
+            return out
 
     def claim_gifts(self, ids: set[int]) -> list[int]:
         """Mark gifts the client acknowledged (sub-sync 10481) as delivered so they are never sent again."""
@@ -189,15 +212,22 @@ class Service:
         self.grant_packages: dict[int, str] = {}
 
     def _fetch_gifts(self, member: int, payload: bytes) -> bytes:
-        """Reply: u32 count, then per gift u32 gift_id, u32 product_id, lp, lp, lp (SP-08/SP-10). The reward
-        string (catalogue metadata, e.g. "type:wrench, qty:16, ...") is put in all three strings because which
-        one the client copies is not yet established; to be narrowed by testing."""
-        gifts = self.store.pending_gifts()
+        """Reply: u32 count, then per gift u32 gift_id, u32 kind, lp, lp, lp (SP-08/SP-10, SP-16).
+        The game's gift listener (CC_Helpers::Manager, ELF 0xcd3cfc) switches on the second u32: kind 2 = offerwall
+        gift, stored by id with the FIRST string as an unclaimed reward (0x12ed440) and claimed in-game, where
+        0x12eda84 parses that string with the store parser; kind 0 goes to 0xcd7844; any other value is dropped
+        ("Unsupported Adhoc Gift Type"). The first string is the catalogue metadata ("type:wrench, qty:16, ...").
+        Kind 0 (0xcd7844, "Community Management"): string 1 is a ';'-separated reward list, each parsed by the
+        store parser (any reward type) and credited at once through the non-purchase award 0xc879fc(r, 0, 1);
+        if string 3 is not empty a popup shows string 2 as title and string 3 as message."""
+        gifts = self.store.take_gifts_to_offer()
         out = struct.pack("<I", len(gifts))
         for g in gifts:
-            out += struct.pack("<II", g["id"], g["product_id"]) + b"".join(cc.lp_string(g["metadata"]) for _ in range(3))
+            kind = g.get("kind", OFFERWALL_GIFT_KIND)
+            out += (struct.pack("<II", g["id"], kind) + cc.lp_string(g["metadata"])
+                    + cc.lp_string(g.get("title", "")) + cc.lp_string(g.get("message", "")))
         if gifts:
-            log.info("gifts: offering %s", [(g["id"], g["product_id"]) for g in gifts])
+            log.info("gifts: offering %s", [(g["id"], g["product_id"], g.get("kind", 2)) for g in gifts])
         return out
 
     def _promo_code(self, member: int, payload: bytes) -> bytes:
@@ -218,17 +248,18 @@ class Service:
         return out + cc.lp_string(b"") if ok else out
 
     def _claim_gifts(self, member: int, payload: bytes) -> bytes:
-        """Request: u32 count, per gift u32, u32, lp, u32 flag (SP-09). Marks the listed gift ids delivered."""
+        """Request (as sent by the client, run 32): u32 count, per gift u32 gift_id, lp reward string, u32 flag.
+        Marks the listed gift ids delivered."""
         ids = set()
         try:
             (n,) = struct.unpack_from("<I", payload, 0)
             o = 4
             for _ in range(min(n, 1000)):
-                a, b = struct.unpack_from("<II", payload, o)
-                o += 8
-                (sl,) = struct.unpack_from("<I", payload, o)
-                o += 4 + sl + 4
-                ids.add(a)
+                (gid, sl) = struct.unpack_from("<II", payload, o)
+                o += 8 + sl + 4
+                if o > len(payload):
+                    raise struct.error("truncated")
+                ids.add(gid)
         except struct.error:
             log.warning("gifts: malformed 10481 request (%d bytes)", len(payload))
         claimed = self.store.claim_gifts(ids)
@@ -236,11 +267,21 @@ class Service:
         return b""
 
     def grant(self, product_id: int, source: str) -> int:
-        """Queue a preservation grant for an allowed currency package. The amount comes only from the catalogue."""
+        """Queue a preservation grant for an allowed currency package. The amount comes only from the catalogue.
+        Gold goes as a kind-2 offerwall gift (claimed from Notifications, SP-16). R$ and M$ go as kind-0 gifts,
+        credited at once with a RETR0 popup: the kind-2 claim (0x12eda84) credits Gold only and drops anything
+        else ("Unsupported Offerwall Reward", SP-17)."""
         meta = self.grant_packages.get(product_id)
         if meta is None:
             raise ValueError(f"product {product_id} is not an allowed currency package")
-        gid = self.store.queue_gift(product_id, meta, source)
+        if meta.startswith(OFFERWALL_GIFT_TYPES):
+            gid = self.store.queue_gift(product_id, meta, source, kind=OFFERWALL_GIFT_KIND)
+        else:
+            kind_tag = meta.split(",")[0].strip()
+            qty = next((p.split(":", 1)[1].strip() for p in meta.split(",") if p.strip().startswith("qty:")), "")
+            amount = f"{int(qty):,} " if qty.isdigit() else ""
+            gid = self.store.queue_gift(product_id, meta, source, kind=COMMUNITY_GIFT_KIND, title="RETR0",
+                                        message=f"Preservation grant: {amount}{CURRENCY_NAMES.get(kind_tag, '')}".strip())
         log.info("grant queued: gift %d = product %d (%s) from %s", gid, product_id, meta, source)
         return gid
 

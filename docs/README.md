@@ -30,7 +30,7 @@ read on their own.
 | Store preservation grants | [features/store-grants.md](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/store-grants.md) |
 | Player name (Username) | [features/username.md](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/username.md) |
 | Sync reply member header fix | [features/sync-reply-header-fix.md](features/sync-reply-header-fix.md) |
-| Gifts (parked) | [features/gifts.md](features/gifts.md) |
+| Gifts | [features/gifts.md](features/gifts.md) |
 
 ## Reference set
 

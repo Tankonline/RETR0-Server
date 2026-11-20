@@ -48,7 +48,7 @@ one PowerShell script.
 | Endpoint | Purpose |
 |---|---|
 | `PUT/GET /retr0/cloudsave/<member>/<key>` | Cloud-save blobs, at the URL the server hands out |
-| `POST /retr0/admin/gift?product=<id>` | Queue a gift (catalogue currency ids only). **Parked**, see [features/gifts.md](features/gifts.md) |
+| `POST /retr0/admin/gift?product=<id>` | Queue a gift (catalogue Gold/R$/M$ package ids only). Working, see [features/gifts.md](features/gifts.md) |
 
 ## 3. Folder layout
 
