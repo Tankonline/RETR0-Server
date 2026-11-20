@@ -48,6 +48,14 @@ OFFERWALL_GIFT_KIND = 2   # ad-hoc gift kind the client stores as a claimable of
 COMMUNITY_GIFT_KIND = 0   # ad-hoc gift kind credited at once as "Community Management" (0xcd7844, SP-17)
 OFFERWALL_GIFT_TYPES = ("type:wrench",)   # the offerwall claim credits store reward type 3 (Gold) only (SP-17)
 CURRENCY_NAMES = {"type:wrench": "Gold", "type:money": "R$", "type:mdollars": "M$"}
+# Operator-defined (custom) gifts: store reward type -> (key it is read with in 0xcee2e0, maximum value, label).
+# Limits stay well inside a signed 32-bit int. Car ids are the game's car database ids.
+CUSTOM_GIFT_TYPES = {
+    "wrench": ("qty", 1_000_000, "Gold"),
+    "money": ("qty", 100_000_000, "R$"),
+    "mdollars": ("qty", 100_000_000, "M$"),
+    "car": ("id", 100_000, "car"),
+}
 
 
 class Store:
@@ -147,21 +155,21 @@ class Store:
             return [dict(x) for x in self.state.get("gifts", {}).get("pending", [])]
 
     def take_gifts_to_offer(self) -> list[dict]:
-        """Pending gifts for one 10480 reply. A kind-0 gift is marked "offered" the first time and never offered
-        again (the client asks twice per session before it acknowledges, and kind 0 has no client dedupe)."""
+        """Pending gifts for one 10480 reply, all of ONE kind: the client's listener (0xcd3cfc) reads the kind of
+        the first gift only and handles the whole list that way (SP-18), so kinds are never mixed. Kind-0 gifts
+        not yet offered go first; otherwise the kind-2 gifts (the client asks twice per session, so both reach it).
+        A kind-0 gift is marked "offered" and never offered again (kind 0 has no client-side dedupe)."""
         with self.lock:
-            g = self.state.get("gifts", {})
-            out, now, changed = [], int(time.time()), False
-            for x in g.get("pending", []):
-                if x.get("kind", OFFERWALL_GIFT_KIND) == COMMUNITY_GIFT_KIND:
-                    if x.get("offered"):
-                        continue
+            pending = self.state.get("gifts", {}).get("pending", [])
+            community = [x for x in pending
+                         if x.get("kind", OFFERWALL_GIFT_KIND) == COMMUNITY_GIFT_KIND and not x.get("offered")]
+            if community:
+                now = int(time.time())
+                for x in community:
                     x["offered"] = now
-                    changed = True
-                out.append(dict(x))
-            if changed:
                 self._save()
-            return out
+                return [dict(x) for x in community]
+            return [dict(x) for x in pending if x.get("kind", OFFERWALL_GIFT_KIND) == OFFERWALL_GIFT_KIND]
 
     def claim_gifts(self, ids: set[int]) -> list[int]:
         """Mark gifts the client acknowledged (sub-sync 10481) as delivered so they are never sent again."""
@@ -285,6 +293,29 @@ class Service:
         log.info("grant queued: gift %d = product %d (%s) from %s", gid, product_id, meta, source)
         return gid
 
+    def grant_custom(self, rewards: list[tuple[str, int]], source: str, message: str = "") -> int:
+        """Queue an operator-defined gift: a list of (type, value) with type in CUSTOM_GIFT_TYPES (value = amount for
+        currencies, car database id for cars). Sent as one kind-0 community gift, so the client credits every
+        entry at once through the store parser (0xcee2e0, StoreProducts.cpp: currencies read "qty", car types
+        read "id") and shows a RETR0 popup."""
+        if not rewards or len(rewards) > 20:
+            raise ValueError("give 1 to 20 rewards")
+        parts, labels = [], []
+        for kind, value in rewards:
+            spec = CUSTOM_GIFT_TYPES.get(kind)
+            if spec is None:
+                raise ValueError(f"unsupported reward type {kind!r} (allowed: {', '.join(CUSTOM_GIFT_TYPES)})")
+            key, limit, label = spec
+            if not isinstance(value, int) or not 0 < value <= limit:
+                raise ValueError(f"{kind}: {key} must be a whole number from 1 to {limit:,}")
+            parts.append(f"type:{kind}, {key}:{value}")
+            labels.append(f"car #{value}" if key == "id" else f"{value:,} {label}")
+        meta = ";".join(parts)
+        text = message.strip()[:200] or "Preservation grant: " + ", ".join(labels)
+        gid = self.store.queue_gift(0, meta, source, kind=COMMUNITY_GIFT_KIND, title="RETR0", message=text)
+        log.info("custom grant queued: gift %d = %s from %s", gid, meta, source)
+        return gid
+
     @staticmethod
     def server_value() -> int:
         # The u32 both replies hand to the same CloudCell sub-object. [likely] server time; unverified.
@@ -397,7 +428,15 @@ def make_handler(service: Service):
                 from urllib.parse import parse_qs, urlsplit
                 q = parse_qs(urlsplit(self.path).query)
                 try:
-                    gid = service.grant(int(q.get("product", ["0"])[0]), source="admin")
+                    if "product" in q:
+                        gid = service.grant(int(q["product"][0]), source="admin")
+                    else:
+                        # custom: ?gold=N&money=N&mdollars=N&car=ID (car may repeat), optional &message=...
+                        names = {"gold": "wrench", "wrench": "wrench", "money": "money", "rdollars": "money",
+                                 "mdollars": "mdollars", "car": "car"}
+                        rewards = [(names[k], int(v)) for k, vs in q.items() if k in names for v in vs]
+                        gid = service.grant_custom(rewards, source="admin",
+                                                   message=q.get("message", [""])[0])
                 except ValueError as e:
                     return self._send(400, str(e).encode())
                 return self._send(200, json.dumps({"gift_id": gid}).encode())

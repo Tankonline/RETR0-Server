@@ -48,7 +48,8 @@ one PowerShell script.
 | Endpoint | Purpose |
 |---|---|
 | `PUT/GET /retr0/cloudsave/<member>/<key>` | Cloud-save blobs, at the URL the server hands out |
-| `POST /retr0/admin/gift?product=<id>` | Queue a gift (catalogue Gold/R$/M$ package ids only). Working, see [features/gifts.md](features/gifts.md) |
+| `POST /retr0/admin/gift?product=<id>` | Queue a catalogue Gold/R$/M$ package. See [features/gifts.md](features/gifts.md) |
+| `POST /retr0/admin/gift?money=N&gold=N&mdollars=N&car=ID&message=...` | Queue a custom gift (limits enforced; cars by id) |
 
 ## 3. Folder layout
 
@@ -57,6 +58,9 @@ server/
   retr0_server.cmd / .ps1     start | stop | status | restart   [-WithSync]
   client.ps1                  status | apply | restore | install-fresh | play   (the RETR0 client on the emulator)
                               ui-text | ui-text-restore   (button text: "Change Username (Restart Required)")
+                              fix-reboot   (after an emulator/system restart dropped the swapped APK)
+  client.cmd                  wrapper for client.ps1 (used by the control panel)
+  RETR0 Server.exe            control panel, built from tools/control_panel/ (see README "Control panel")
   play.cmd                    = client.ps1 play
   store_grant.ps1             old name, forwards to client.ps1
   config/                     recorder rules

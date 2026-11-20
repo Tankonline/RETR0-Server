@@ -12,7 +12,7 @@
 | Edited asset lists | A fresh install lacks the files that could not be supplied byte-exactly (some limited-time GUI art, low-detail track variants) |
 | arm64 only | The native patch targets the arm64-v8a library of 14.0.1; armv7 devices are not patched |
 | Emulator-focused | Paths and `adb reverse` assume the emulator; a real phone would need a reachable server address in the redirect |
-| In-place swap after a reboot | **It does not survive:** at boot Android re-checks signatures and removes the swapped APK's code (data is kept). Reinstall the original with `adb install -r`, then `client.ps1 apply`. A permanent install needs a signed APK, which today means a fresh install |
+| In-place swap after a reboot | **It does not survive** an emulator reboot or a crash-restart of Android's system process (seen in run 34): at boot Android re-checks signatures and removes the swapped APK's code (data is kept). Run `client.ps1 fix-reboot` (or the control panel's "Fix after emulator restart"). A permanent install needs a signed APK, which today means a fresh install |
 | Missing UI images show no error | If cards lack their frame or badge, the device is missing UI image files; compare it with your PC copy of the game data (the game logs nothing) |
 | Store package sizes | Some Gold/R$/M$ package sizes were not individually tested (same code path as the tested ones); the 7-Day Gold Card (10196) is not covered |
 

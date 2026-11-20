@@ -5,11 +5,21 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Control panel** `RETR0 Server.exe` (source in `server/tools/control_panel/`, built with Windows' own C# compiler):
+  start/stop with live status lights, client commands, catalogue and custom gifts, file list, log view. It runs the
+  existing scripts, so the Python services stay editable without a rebuild.
+- **Custom gifts and cars**: `?money=&gold=&mdollars=&car=&message=` on the admin endpoint, validated and sent as an
+  instant community gift (run 34: R$ +12,345, car 383 added to the garage).
+- `client.cmd` wrapper and `client.ps1 fix-reboot`.
+
 ### Fixed
 - **Server gifts work** (runs 32–33): the gift reply now sends the gift *kind* the client expects (the product id
   was sent there, so every gift was dropped). Gold arrives as a claimable offer reward; R$ and M$ as community gifts,
   credited at once with a RETR0 popup and offered only once. The 10481 receipt is parsed with the client's real
   layout.
+- One gift kind per reply: the client applies the first gift's kind to the whole list, so mixing a Gold offer gift
+  with instant gifts lost the instant ones.
 
 ## [0.2.0] - 2026-11-20
 

@@ -10,7 +10,7 @@ stages after it. Evidence lives in the referenced documents; nothing here is new
 |---|---|
 | 1 Audit | DONE (this file, 2026-11-20) |
 | 2 Gift re-test (16 Gold, product 10051) | **DONE, works** (run 32, STORE_PRESERVATION_GRANTS.md SP-16): server fix = gift kind 2 |
-| 3 Gift expansion (R$, M$, other reward types, cars) | R$/M$ **DONE, work** as kind-0 gifts (run 33, SP-17); cars and other reward types NOT STARTED |
+| 3 Gift expansion (R$, M$, other reward types, cars) | R$/M$ **DONE** (run 33, SP-17); **custom amounts and cars DONE** (run 34, SP-18); other reward types (car_upgrades, vp, driver_level ...) parse but are untested; a car id -> name list is still needed |
 | 4 Save/profile investigation | PARTLY DONE earlier (format fully known, SV-01..SV-27); currency editing BLOCKED on an owner decision (D1) |
 | 5 Save backup/restore | NOT STARTED (game has its own local backup cheat, see below) |
 | 6 Corner-tap gesture | NOT STARTED |

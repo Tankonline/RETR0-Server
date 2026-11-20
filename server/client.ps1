@@ -11,13 +11,15 @@
 #                               its prompt to "Enter your new username": edits two of the game's own UI layout files
 #                               on the emulator (built by tools\retr0_gui_patch.py; originals kept in backups\ui_text)
 #   .\client.ps1 ui-text-restore  put the two original layout files back
+#   .\client.ps1 fix-reboot     after an emulator restart removed the swapped APK: reinstall the original APK over
+#                               the kept app record (same signature, data kept), then apply the RETR0 client again
 #
 # The RETR0 client is the original 14.0.1 APK plus (1) the store preservation grants (OVERVIEW.md section 8)
 # and (2) a built-in redirect: every CloudCell / asset-CDN request goes to http://127.0.0.1:8780 on the
 # emulator, which `adb reverse` forwards to this server (OVERVIEW.md section 9). Other hosts are untouched.
 # apply/restore need root on the emulator (Google APIs image): they copy the APK over base.apk and keep its
 # owner, mode, SELinux label and timestamp, then let Android re-optimise the app's code.
-param([Parameter(Mandatory = $true)][ValidateSet("status", "apply", "restore", "install-fresh", "play", "ui-text", "ui-text-restore")][string]$Command)
+param([Parameter(Mandatory = $true)][ValidateSet("status", "apply", "restore", "install-fresh", "play", "ui-text", "ui-text-restore", "fix-reboot")][string]$Command)
 
 $ErrorActionPreference = "Stop"
 $Pkg = "com.ea.games.r3_row"
@@ -121,6 +123,11 @@ switch ($Command) {
         Push-GuiFiles "$tmp\out"
         Remove-Item -Recurse -Force $tmp
         Write-Host "UI text applied; start the game again to see it."
+    }
+    "fix-reboot" {
+        adb install -r (Join-Path $ApkDir $Original) | Out-Host
+        if ($LASTEXITCODE -ne 0) { throw "adb install of the original APK failed" }
+        Set-DeviceApk $Client
     }
     "ui-text-restore" {
         if (-not (Test-Path (Join-Path $GuiBackup $GuiFiles[0]))) { throw "no backup in $GuiBackup" }

@@ -285,8 +285,20 @@ def test_rs_and_ms_go_as_community_gifts_offered_once(service):
         assert o == len(body)
         return out
 
+    # SP-18: the client applies the FIRST gift's kind to the whole reply, so one reply never mixes kinds:
+    # instant kind-0 gifts first, then (second request of the same session) the kind-2 gifts
     first = offered(service._fetch_gifts(1, b""))
-    assert first == [(g_gold, 2, ["type:wrench, qty:16", "", ""]),
-                     (g_rs, 0, ["type:money, qty:50000", "RETR0", "Preservation grant: 50,000 R$"])]
+    assert first == [(g_rs, 0, ["type:money, qty:50000", "RETR0", "Preservation grant: 50,000 R$"])]
     second = offered(service._fetch_gifts(1, b""))          # same session, before the client acknowledges
-    assert [x[0] for x in second] == [g_gold]               # kind 0 is not offered twice
+    assert second == [(g_gold, 2, ["type:wrench, qty:16", "", ""])]   # kind 0 is not offered twice
+
+
+def test_custom_gifts_are_validated_community_gifts(service):
+    """Operator-defined gifts: any amount within limits, or a car by id; always kind 0 with a RETR0 popup."""
+    gid = service.grant_custom([("money", 12345), ("car", 383)], source="test")
+    g = [x for x in service.store.pending_gifts() if x["id"] == gid][0]
+    assert g["kind"] == 0 and g["metadata"] == "type:money, qty:12345;type:car, id:383"
+    assert g["title"] == "RETR0" and g["message"] == "Preservation grant: 12,345 R$, car #383"
+    for bad in ([("money", 0)], [("money", 10**9)], [("repair", 1)], [("car", -5)], []):
+        with pytest.raises(ValueError):
+            service.grant_custom(bad, source="test")

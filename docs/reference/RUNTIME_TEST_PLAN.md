@@ -318,3 +318,9 @@ Findings: `07_DOCUMENTATION/STORE_PRESERVATION_GRANTS.md` SP-11..SP-15. Outputs:
 - Backups: `08_TESTING/runtime/out/backups/<time>_before_rs_ms_gifts/` and `<time>_before_kind0_gifts/` (device `files/doc/` + server state).
 - 33a, kind 2 (offerwall): R$ 50,000 (10045) and M$ 45,000 (10461) arrived as "YOU HAVE 2 REWARDS FROM OFFERS!" but the claim credited nothing (the offerwall claim is Gold-only, SP-17). The server's 10481 parser also failed on two gifts ("malformed", 158 bytes); fixed to the real layout. Gifts 4 and 5 moved to `held`. A follow-up 16 Gold gift (6) checked the fixed receipt parser: Gold 709 -> 725.
 - 33b, kind 0 (Community Management): gifts 7 (R$ 50,000) and 8 (M$ 45,000) offered once, acknowledged; popups "RETR0 - Preservation grant: 50,000 R$" / "... 45,000 M$"; R$ 3,571,000 -> 3,621,000, M$ 778,600 -> 823,600, Gold 725 unchanged. After a restart: same balances, nothing re-offered, 0 asserts. Tests: 62 pass.
+
+### Run 34 (2026-11-20, owner approved): custom gifts and a car; client loss explained
+- The client vanished at 20:46 without an emulator reboot: Android's system_server crashed (SIGSEGV, pid 569) and restarted; its package rescan found `base.apk` without EA's v2 signature and dropped the code (data kept). Any reboot or system_server restart does this to an in-place swap. Restored with the new `client.cmd fix-reboot` (= panel button "Fix after emulator restart").
+- Backup: `08_TESTING/runtime/out/backups/<time>_before_custom_gifts/`.
+- 34a: owner's Gold gift 9 (kind 2) + custom R$ 12,345 (10) + car 383 (11) in one reply -> all filed as offer rewards; claim gave 16 Gold only. Gifts 10/11 moved to `held`. Server now sends one kind per reply (SP-18).
+- 34b: re-sent as 12 and 13: popups "Preservation grant: 12,345 R$" and "... car #383"; R$ 3,621,000 -> 3,633,345; Motorsport garage 1/192 -> 2/192 (Audi e-tron FE06). After a restart: same, nothing re-offered. Tests: 63 pass.
