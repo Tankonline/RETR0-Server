@@ -9,6 +9,9 @@ versions follow [Semantic Versioning](https://semver.org/).
 - **Control panel** `RETR0 Server.exe` (source in `server/tools/control_panel/`, built with Windows' own C# compiler):
   start/stop with live status lights, client commands, catalogue and custom gifts, file list, log view. It runs the
   existing scripts, so the Python services stay editable without a rebuild.
+- **Control panel 0.4 redesign**: dark/light theme, navigation rail, Overview page (status, service tiles, recent gifts,
+  activity feed), server status pill with uptime, "stopped unexpectedly" toast, gift filters, file filter, log
+  highlighting, danger zone for Restore original / New install, collapsible output.
 - **Custom gifts and cars**: `?money=&gold=&mdollars=&car=&message=` on the admin endpoint, validated and sent as an
   instant community gift (run 34: R$ +12,345, car 383 added to the garage).
 - `client.cmd` wrapper and `client.ps1 fix-reboot`.
