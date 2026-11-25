@@ -6,6 +6,11 @@ versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **LAN mode** ([docs/features/lan-mode.md](docs/features/lan-mode.md)): `retr0_server.ps1 start -Lan` or the
+  control panel's LAN toggle. The CDN service also listens on the PC's network addresses but answers only loopback
+  and private home-network clients; UDP 8799 discovery (`RETR0?` -> `RETR0 <port>`) lets the RETR0 link client
+  find the server. Tested on an NVIDIA SHIELD Tablet K1 over Wi-Fi (run 35).
+- **Control panel 0.5**: LAN toggle, LAN in the status pill, the PC address to use, and the devices seen.
 - **Control panel** `RETR0 Server.exe` (source in `server/tools/control_panel/`, built with Windows' own C# compiler):
   start/stop with live status lights, client commands, catalogue and custom gifts, file list, log view. It runs the
   existing scripts, so the Python services stay editable without a rebuild.
@@ -17,6 +22,10 @@ versions follow [Semantic Versioning](https://semver.org/).
 - `client.cmd` wrapper and `client.ps1 fix-reboot`.
 
 ### Fixed
+- **Cloud-save uploads** were handed out as `127.0.0.1:8781`, which no device can reach; the sync service now
+  gets `--public-base http://127.0.0.1:8780`.
+- The CDN service retries GET/HEAD/PUT once after a connection reset on its hop to the sync service (POST is never
+  replayed) and passes the sync service's own error replies through unchanged.
 - **Server gifts work** (runs 32–33): the gift reply now sends the gift *kind* the client expects (the product id
   was sent there, so every gift was dropped). Gold arrives as a claimable offer reward; R$ and M$ as community gifts,
   credited at once with a RETR0 popup and offered only once. The 10481 receipt is parsed with the client's real

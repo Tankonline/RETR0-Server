@@ -29,7 +29,7 @@ using System.Windows.Forms;
 
 [assembly: System.Reflection.AssemblyTitle("RETR0 Server")]
 [assembly: System.Reflection.AssemblyProduct("Project RETR0")]
-[assembly: System.Reflection.AssemblyVersion("0.4.0.0")]
+[assembly: System.Reflection.AssemblyVersion("0.5.0.0")]
 
 namespace Retr0
 {
@@ -1051,6 +1051,10 @@ namespace Retr0
         readonly System.Windows.Forms.Timer toastTimer = new System.Windows.Forms.Timer();
         readonly Toggle chkSync = new Toggle("With sync", true, Ui.P(40));
         readonly Toggle chkSyncOverview = new Toggle("With sync", true, Ui.P(32));
+        readonly Toggle chkLan = new Toggle("LAN mode", false, Ui.P(40));
+        readonly Toggle chkLanOverview = new Toggle("LAN mode", false, Ui.P(32));
+        readonly ThemedList lvDevices = new ThemedList();
+        bool lanOn, modeSynced; string lanIps = "";
         readonly ThemedCombo cboProduct = new ThemedCombo();
         readonly ThemedList lvGifts = new ThemedList(), lvFiles = new ThemedList(), lvServices = new ThemedList(), lvRecent = new ThemedList();
         readonly ThemedCombo cboLog = new ThemedCombo();
@@ -1219,6 +1223,7 @@ namespace Retr0
             if (key == "gf") LoadGifts();
             if (key == "fl") LoadFiles();
             if (key == "lg") LoadLog();
+            if (key == "sv") LoadDevices();
         }
 
         static FlowLayoutPanel Flow()
@@ -1245,6 +1250,10 @@ namespace Retr0
             chkSyncOverview.Margin = new Padding(0, 0, Ui.P(14), Ui.P(8));
             f.Controls.Add(chkSyncOverview);
             chkSyncOverview.CheckedChanged += delegate { if (chkSync.Checked != chkSyncOverview.Checked) chkSync.Checked = chkSyncOverview.Checked; };
+            chkLanOverview.Margin = new Padding(0, 0, Ui.P(14), Ui.P(8));
+            f.Controls.Add(chkLanOverview);
+            chkLanOverview.CheckedChanged += delegate { if (chkLan.Checked != chkLanOverview.Checked) chkLan.Checked = chkLanOverview.Checked; };
+            tips.SetToolTip(chkLanOverview, "Let phones and tablets on your home network connect (applies on Start / Restart)");
             ServerButtons(f, false);
 
             var emu = new Card("Emulator & game", null);
@@ -1291,10 +1300,22 @@ namespace Retr0
             chkSync.Margin = new Padding(0, 0, Ui.P(18), Ui.P(8));
             f.Controls.Add(chkSync);
             chkSync.CheckedChanged += delegate { if (chkSyncOverview.Checked != chkSync.Checked) chkSyncOverview.Checked = chkSync.Checked; };
+            chkLan.Margin = new Padding(0, 0, Ui.P(18), Ui.P(8));
+            f.Controls.Add(chkLan);
+            chkLan.CheckedChanged += delegate { if (chkLanOverview.Checked != chkLan.Checked) chkLanOverview.Checked = chkLan.Checked; };
             ServerButtons(f, true);
             svc.Add(new Hint("Starts the three Python services in services\\ (127.0.0.1 only). Sync = the CloudCell replacement " +
-                             "(gifts, cloud saves, racing codes). Edit a .py file, then Restart: no rebuild needed."));
+                             "(gifts, cloud saves, racing codes). LAN mode (on Start / Restart) also lets phones and tablets on your " +
+                             "home network connect to port 8780; sync and gifts stay on this PC. Edit a .py file, then Restart."));
             p.AddRow(false, 12, svc);
+
+            var devCard = new Card("LAN devices", "devices on your network that reached the server");
+            lvDevices.Columns.Add("Device", Ui.P(150));
+            lvDevices.Columns.Add("Last seen", Ui.P(150));
+            lvDevices.Columns.Add("Requests", Ui.P(90), HorizontalAlignment.Right);
+            lvDevices.Columns.Add("Last request", Ui.P(260));
+            lvDevices.Height = Ui.P(26) * 4 + Ui.P(14);
+            devCard.Add(lvDevices);
 
             var detail = new Card("Service detail", "from PID files and listening ports, every 4 s");
             lvServices.BadgeColumn = 1;
@@ -1321,10 +1342,11 @@ namespace Retr0
             Btn(hf, "Open server folder", G.OpenFolder, BtnKind.Normal, delegate { Explore(root); });
             help.Add(new Hint("The full guide is OVERVIEW.md in the server folder; README.md has the short version."));
             p.AddRow(false, 8, detail, 4, help);
+            p.AddRow(false, 12, devCard);
             return p;
         }
 
-        string SyncArg() { return chkSync.Checked ? " -WithSync" : ""; }
+        string SyncArg() { return (chkSync.Checked ? " -WithSync" : "") + (chkLan.Checked ? " -Lan" : ""); }
 
         void ServerCommand(string args, string title)
         {
@@ -1557,7 +1579,7 @@ namespace Retr0
             if (!IsHandleCreated) return;
             bool dark = Theme.T.Dark;
             Native.DarkTitleBar(this, dark);
-            foreach (Control c in new Control[] { lvGifts, lvFiles, lvServices, lvRecent, feed, output, logView })
+            foreach (Control c in new Control[] { lvGifts, lvFiles, lvServices, lvRecent, lvDevices, feed, output, logView })
                 Native.Scrollbars(c, dark);
             foreach (var p in pages.Values) Native.Scrollbars(p, dark);
             Native.Cue(txtFileFilter, "Filter files…");
@@ -1650,8 +1672,16 @@ namespace Retr0
         // ------------------------------------------------------------------ status
         void RefreshStatus()
         {
-            var tcp = new HashSet<int>(IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners()
-                                       .Where(e => IPAddress.IsLoopback(e.Address) || e.Address.Equals(IPAddress.Any)).Select(e => e.Port));
+            var listeners = IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners();
+            var tcp = new HashSet<int>(listeners.Where(e => IPAddress.IsLoopback(e.Address) || e.Address.Equals(IPAddress.Any)).Select(e => e.Port));
+            lanOn = listeners.Any(e => e.Port == 8780 && e.Address.Equals(IPAddress.Any));
+            lanIps = lanOn ? string.Join(", ", PrivateIPv4()) : "";
+            if (!modeSynced && AlivePid("cdn") > 0)
+            {   // start the switches from what is actually running, so Restart keeps the same mode
+                modeSynced = true;
+                chkLan.Checked = lanOn;
+                chkSync.Checked = AlivePid("sync") > 0;
+            }
             var udp = new HashSet<int>(IPGlobalProperties.GetIPGlobalProperties().GetActiveUdpListeners()
                                        .Where(e => IPAddress.IsLoopback(e.Address) || e.Address.Equals(IPAddress.Any)).Select(e => e.Port));
             bool wasRunning = svcs[0].On && svcs[1].On;
@@ -1695,6 +1725,75 @@ namespace Retr0
             }
             UpdateStatusViews();
             LoadGiftsIfChanged();
+            if (currentPage == "sv") LoadDevices();
+        }
+
+        static IEnumerable<string> PrivateIPv4()
+        {
+            var list = new List<string>();
+            try
+            {
+                foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    if (ni.OperationalStatus != OperationalStatus.Up) continue;
+                    foreach (var a in ni.GetIPProperties().UnicastAddresses)
+                    {
+                        if (a.Address.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork) continue;
+                        var b = a.Address.GetAddressBytes();
+                        if (b[0] == 10 || (b[0] == 192 && b[1] == 168) || (b[0] == 172 && b[1] >= 16 && b[1] <= 31)) list.Add(a.Address.ToString());
+                    }
+                }
+            }
+            catch { }
+            return list;
+        }
+
+        // LAN devices: distinct non-loopback clients in the cdn service's request log (last 512 KB).
+        void LoadDevices()
+        {
+            var seen = new Dictionary<string, string[]>();   // ip -> [last time, count, last request]
+            string path = Path.Combine(root, @"runtime\recorder\requests.jsonl");
+            try
+            {
+                string text;
+                using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+                {
+                    long start = Math.Max(0, fs.Length - 512 * 1024);
+                    fs.Seek(start, SeekOrigin.Begin);
+                    using (var sr = new StreamReader(fs, Encoding.UTF8)) text = sr.ReadToEnd();
+                }
+                var js = new JavaScriptSerializer();
+                foreach (var line in text.Split('\n'))
+                {
+                    if (line.Length < 2 || line[0] != '{') continue;
+                    Dictionary<string, object> r;
+                    try { r = (Dictionary<string, object>)js.DeserializeObject(line); } catch { continue; }
+                    string ip = Convert.ToString(Get(r, "client", ""));
+                    if (ip.Length == 0 || ip == "127.0.0.1" || ip == "::1") continue;
+                    string[] v;
+                    if (!seen.TryGetValue(ip, out v)) { v = new[] { "", "0", "" }; seen[ip] = v; }
+                    v[0] = Convert.ToString(Get(r, "time", "")).Replace("T", " ");
+                    v[1] = (int.Parse(v[1]) + 1).ToString();
+                    v[2] = Convert.ToString(Get(r, "method", "")) + " " + Convert.ToString(Get(r, "path", "")) + " -> " + Convert.ToString(Get(r, "status", ""));
+                }
+            }
+            catch { }
+            lvDevices.BeginUpdate();
+            lvDevices.Items.Clear();
+            foreach (var kv in seen.OrderByDescending(x => x.Value[0]))
+            {
+                var it = new ListViewItem(kv.Key);
+                it.SubItems.Add(kv.Value[0]); it.SubItems.Add(kv.Value[1]); it.SubItems.Add(kv.Value[2]);
+                lvDevices.Items.Add(it);
+            }
+            if (seen.Count == 0)
+            {
+                var it = new ListViewItem(lanOn ? "none yet" : "LAN mode is off") { Name = "dim" };
+                it.SubItems.Add(""); it.SubItems.Add(""); it.SubItems.Add("");
+                lvDevices.Items.Add(it);
+            }
+            lvDevices.EndUpdate();
+            lvDevices.FitLastColumn();
         }
 
         void SetEmulator(bool ok, string state)
@@ -1735,12 +1834,12 @@ namespace Retr0
             header.Lights[0] = dns; header.Lights[1] = cdn; header.Lights[2] = sync; header.Lights[3] = emuOn;
             string missing = string.Join(", ", svcs.Where(s => !s.On).Select(s => s.Short));
             if (!statusKnown) { header.PillText = "Checking…"; header.PillDetail = ""; header.PillColor = t.Dim; }
-            else if (running) { header.PillText = "Server running"; header.PillDetail = "· up " + up + (sync ? " · with sync" : " · without sync"); header.PillColor = t.Ok; }
+            else if (running) { header.PillText = "Server running"; header.PillDetail = "· up " + up + (sync ? " · with sync" : " · without sync") + (lanOn ? " · LAN " + lanIps : ""); header.PillColor = t.Ok; }
             else if (any) { header.PillText = "Server partly running"; header.PillDetail = "· not running: " + missing; header.PillColor = t.Warn; }
             else { header.PillText = "Server stopped"; header.PillDetail = stoppedAt != DateTime.MinValue ? "· stopped " + stoppedAt.ToString("HH:mm") : ""; header.PillColor = t.Bad; }
             header.Invalidate();
 
-            if (running) ovServer.Set(t.Ok, "Running", "since " + since.ToString("HH:mm") + " · up " + up + (sync ? " · with sync" : " · without sync"));
+            if (running) ovServer.Set(t.Ok, "Running", "since " + since.ToString("HH:mm") + " · up " + up + (sync ? " · with sync" : " · without sync") + (lanOn ? " · LAN " + lanIps : ""));
             else if (any) ovServer.Set(t.Warn, "Partly running", "not running: " + missing);
             else ovServer.Set(statusKnown ? t.Bad : t.Dim, statusKnown ? "Stopped" : "Checking…", statusKnown ? "Start it before playing" : "");
             ovEmu.Set(!emuKnown ? t.Dim : emuOn ? t.Ok : t.Bad, !emuKnown ? "Checking…" : emuOn ? "Connected" : "Not connected",

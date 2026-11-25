@@ -80,6 +80,7 @@ server/
   another program holds and names that program.
 - `stop` stops only what it started (including the child process of the venv launcher).
 - `status` shows each service, a live HTTP check and the number of packs.
+- `-Lan` (with `start`) serves devices on your home network: see [LAN mode](features/lan-mode.md).
 
 ## 5. Troubleshooting
 
@@ -90,6 +91,7 @@ server/
 | "An internet connection is required" on events | `client.ps1 status` | The game isn't connected (not the RETR0 client, or no `adb reverse`): use `play.cmd` |
 | "Connection error" after a sync feature | `runtime/sync.log` | A server older than the member-header fix |
 | Download stalls with `didn't match its MD5` | logcat | A listed file isn't byte-exact: rebuild with `--drop-unavailable` |
+| Device on Wi-Fi finds no server | logcat tag `RETR0` on the device | Server not started with `-Lan`, Public network profile, or a firewall Block rule for `python.exe` ([LAN mode](features/lan-mode.md)) |
 | 404 for a pack | `runtime/recorder/requests.jsonl` | That list's pack is missing from `cdn/` |
 
 Every hostname the game tried is in `runtime/dns_queries.jsonl`; every request it made is in `runtime/recorder/`.

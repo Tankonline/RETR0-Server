@@ -121,6 +121,12 @@ It stays connected until you close the game. When you are done:
 server\retr0_server.cmd stop
 ```
 
+## 7a. Another device on your Wi-Fi (optional)
+
+Start the server with `-Lan` (or tick LAN mode in the control panel), allow TCP 8780 and UDP 8799 from your
+home network in the Windows firewall, and install the RETR0 link client on the device. Step by step:
+[LAN mode](features/lan-mode.md).
+
 ## 8. Undo
 
 | To undo | Do |

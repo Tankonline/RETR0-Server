@@ -13,13 +13,18 @@ Services
                                                               service's proxy rule; OFF unless -WithSync
 
 Usage (from any folder; or double-click / run retr0_server.cmd):
-  powershell -ExecutionPolicy Bypass -File retr0_server.ps1 start [-WithSync]
-  ... retr0_server.ps1 status | stop | restart [-WithSync]
+  powershell -ExecutionPolicy Bypass -File retr0_server.ps1 start [-WithSync] [-Lan]
+  ... retr0_server.ps1 status | stop | restart [-WithSync] [-Lan]
+  -Lan  LAN mode: the cdn service (TCP 8780) also listens on this PC's network addresses and serves only
+        loopback and private home-network devices; it answers the RETR0 discovery broadcast on UDP 8799.
+        sync (8781) and the gift admin endpoint stay 127.0.0.1-only. Windows Firewall must allow inbound
+        TCP 8780 (and UDP 8799 for automatic discovery) on the Private profile.
 State, PID files and logs: runtime\
 #>
 param(
     [Parameter(Position = 0)][ValidateSet('start', 'stop', 'status', 'restart')][string]$Action = 'status',
     [switch]$WithSync,
+    [switch]$Lan,
     [string]$Rules = ''
 )
 
@@ -39,10 +44,14 @@ function Get-Services {
         Args = @('--bind', '127.0.0.1', '--port', '53', '--log', (Join-Path $State 'dns_queries.jsonl')) }
     $svc['cdn'] = @{ Script = 'services\recorder_server.py'; Proto = 'TCP'; Port = $CdnPort;
         Args = @('--port', "$CdnPort", '--rules', $Rules, '--out', (Join-Path $State 'recorder')) }
+    if ($Lan) { $svc['cdn'].Args += @('--lan', '--discovery-port', '8799') }
     $svc['sync'] = @{ Script = 'services\local_service\retr0_local_service.py'; Proto = 'TCP'; Port = $SyncPort;
         Args = @('--port', "$SyncPort", '--data-dir', (Join-Path $State 'sync_data'),
                  '--seed-data', (Join-Path $Root 'data\CC_SeedData.bin'),
-                 '--log-file', (Join-Path $State 'sync.log')) }
+                 '--log-file', (Join-Path $State 'sync.log'),
+                 # cloud-save uploads go through the cdn port: on a device 127.0.0.1:8780 is adb reverse or the
+                 # RETR0 link; 8781 is never reachable from a device
+                 '--public-base', "http://127.0.0.1:$CdnPort") }
     return $svc
 }
 
@@ -157,6 +166,14 @@ function Show-Status {
         $code = $null
         if ($_.Exception.Response) { $code = [int]$_.Exception.Response.StatusCode }
         if ($code) { Write-Host "cdn HTTP check: answering ($code for an unknown path, as expected)" } else { Write-Host 'cdn HTTP check: no answer' }
+    }
+    $l = Get-NetTCPConnection -LocalPort $CdnPort -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($null -ne $l -and $l.LocalAddress -in @('0.0.0.0', '::')) {
+        $ips = @(Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object {
+            $_.IPAddress -match '^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)' } | ForEach-Object { $_.IPAddress })
+        Write-Host ("LAN mode: ON  - devices on your network connect to {0} (port {1})" -f ($ips -join ', '), $CdnPort)
+    } elseif ($null -ne $l) {
+        Write-Host 'LAN mode: off (127.0.0.1 only)'
     }
     $packs = Join-Path $Root 'cdn\rr3\live'
     if (Test-Path $packs) {
