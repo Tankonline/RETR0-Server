@@ -5,6 +5,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-25
+
 ### Added
 - **LAN mode** ([docs/features/lan-mode.md](docs/features/lan-mode.md)): `retr0_server.ps1 start -Lan` or the
   control panel's LAN toggle. The CDN service also listens on the PC's network addresses but answers only loopback
@@ -68,5 +70,7 @@ First public release.
   fields). Without it the client misread every non-empty reply ("Connection error"; likely the cause of the gift
   freezes).
 
+[Unreleased]: https://github.com/Tankonline/RETR0-Server/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Tankonline/RETR0-Server/releases/tag/v0.3.0
 [0.2.0]: https://github.com/Tankonline/RETR0-Server/releases/tag/v0.2.0
 [0.1.0]: https://github.com/Tankonline/RETR0-Server/releases/tag/v0.1.0

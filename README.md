@@ -8,7 +8,7 @@
   <a href="LICENSE-DOCS.md"><img alt="Docs: CC BY 4.0" src="https://img.shields.io/badge/docs-CC%20BY%204.0-9fb3d9"></a>
   <img alt="Python 3.12+" src="https://img.shields.io/badge/python-3.12%2B-3776ab">
   <img alt="Game: RR3 14.0.1" src="https://img.shields.io/badge/game-RR3%2014.0.1%20(Android)-ff7a18">
-  <img alt="Network: localhost only" src="https://img.shields.io/badge/network-127.0.0.1%20only-555">
+  <img alt="Network: localhost or home LAN" src="https://img.shields.io/badge/network-localhost%20%2F%20home%20LAN-555">
 </p>
 
 <p align="center">
@@ -37,11 +37,11 @@ their own PC, from their own copy of the game.
 
 | | |
 |---|---|
-| **Runs on** | Windows PC + Android emulator (x86_64, Android 14), all traffic on `127.0.0.1` |
+| **Runs on** | Windows PC + Android emulator (x86_64, Android 14) on `127.0.0.1`; optional LAN mode for Android devices on your home Wi-Fi |
 | **Stack** | Python 3 (standard library only), PowerShell control script |
 | **Serves** | Asset CDN (HTTP Range, rebuilt from *your* data) · `/time` · CloudCell `CC_Sync.php` |
 | **Client** | [RETR0-Client](https://github.com/Tankonline/RETR0-Client) builds a patched client from your own APK |
-| **Tests** | 59 unit tests, run on every push |
+| **Tests** | 66 unit tests, run on every push (Windows and Linux) |
 | **Docs** | 13-chapter guide + feature pages + the full reference set (every finding with evidence) |
 
 ## How it fits together
@@ -77,7 +77,8 @@ flowchart LR
 | Choose your player name instead of "Guest" | ✅ Working | [Username](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/username.md) |
 | Server-side gifts (Gold, R$, M$, custom amounts, cars) | ✅ Working | [Gifts](docs/features/gifts.md) |
 | Control panel (`RETR0 Server.exe`) | ✅ Working | [server/tools/control_panel](server/tools/control_panel/) |
-| Leaderboards · race teams · multiplayer | 🗺️ Planned | [Roadmap](docs/12-known-issues-and-roadmap.md) |
+| LAN mode: play from a phone or tablet on your Wi-Fi | ✅ Working (tested on a SHIELD Tablet K1) | [LAN mode](docs/features/lan-mode.md) |
+| Weekly time trials · leaderboards · race teams · multiplayer | 🗺️ Planned | [Roadmap](docs/12-known-issues-and-roadmap.md) |
 
 ## Quick start
 
@@ -125,9 +126,10 @@ Real Racing 3 14.0.1 and its data. Nothing here contacts EA's infrastructure.
 <details>
 <summary><b>Does it work on a real phone?</b></summary>
 
-It was built and tested on an Android emulator. The client redirect currently targets `127.0.0.1:8780` via
-`adb reverse`; making the address configurable for a phone on the same network is on the
-[roadmap](docs/12-known-issues-and-roadmap.md).
+Yes, on your home network. Start the server in [LAN mode](docs/features/lan-mode.md) and install the client with the
+[RETR0 link](https://github.com/Tankonline/RETR0-Client/blob/main/docs/features/lan-link.md): the game finds the
+server over Wi-Fi by itself. Tested on an NVIDIA SHIELD Tablet K1 (32-bit, Android 8.1). The emulator setup with
+`adb reverse` still works too. The server is not meant to be exposed to the internet.
 </details>
 
 <details>
